@@ -3,12 +3,14 @@ package io.kestra.executor.testkit;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 
 import org.mockito.Mockito;
+
+import com.google.common.util.concurrent.MoreExecutors;
 
 import io.kestra.core.assets.AssetService;
 import io.kestra.core.async.AsyncOperationService;
@@ -25,11 +27,11 @@ import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.LoopExecutionEvent;
 import io.kestra.core.models.executions.statistics.ExecutionStatistic;
-import io.kestra.core.queues.event.Event;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionStateStore;
 import io.kestra.core.namespace.NamespaceFileMetadataStateStore;
+import io.kestra.core.queues.event.Event;
 import io.kestra.core.runners.DisabledReusableInputsExpander;
 import io.kestra.core.runners.ExecutionEvent;
 import io.kestra.core.runners.ExecutionEventType;
@@ -51,6 +53,7 @@ import io.kestra.core.runners.configuration.LocalFilesConfiguration;
 import io.kestra.core.runners.configuration.LoggingConfiguration;
 import io.kestra.core.runners.configuration.VariableConfiguration;
 import io.kestra.core.runners.pebble.PebbleEngineFactory;
+import io.kestra.core.scheduler.queue.TriggerEventQueue;
 import io.kestra.core.server.ServiceStateChangeEvent;
 import io.kestra.core.services.ConcurrencyLimitResolver;
 import io.kestra.core.services.ExecutionOutputService;
@@ -64,7 +67,6 @@ import io.kestra.core.services.configuration.TaskOutputConfiguration;
 import io.kestra.core.storages.NamespaceFactory;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.trace.TracerFactory;
-import io.kestra.core.scheduler.queue.TriggerEventQueue;
 import io.kestra.core.utils.ExecutorsUtils;
 import io.kestra.executor.ConcurrencySlotReleaseProcessor;
 import io.kestra.executor.DefaultExecutor;
@@ -87,7 +89,6 @@ import io.kestra.executor.handler.SubflowExecutionResultMessageHandler;
 import io.kestra.executor.handler.WorkerTaskResultListener;
 import io.kestra.executor.handler.WorkerTaskResultMessageHandler;
 
-import com.google.common.util.concurrent.MoreExecutors;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.event.ApplicationEventPublisher;
@@ -439,7 +440,8 @@ public final class ExecutorTestHarness {
 
         // the production DefaultExecutor over same-thread pools and hand-ticked loops
         ScheduledExecutorService scheduledExecutorService = Mockito.mock(ScheduledExecutorService.class);
-        Mockito.when(scheduledExecutorService.scheduleAtFixedRate(Mockito.any(), Mockito.anyLong(), Mockito.anyLong(), Mockito.any())).thenAnswer(invocation -> {
+        Mockito.when(scheduledExecutorService.scheduleAtFixedRate(Mockito.any(), Mockito.anyLong(), Mockito.anyLong(), Mockito.any())).thenAnswer(invocation ->
+        {
             loops.add(invocation.getArgument(0));
             return Mockito.mock(ScheduledFuture.class);
         });

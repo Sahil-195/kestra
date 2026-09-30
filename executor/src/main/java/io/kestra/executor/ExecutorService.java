@@ -617,7 +617,8 @@ public class ExecutorService {
                             // The parent's errors/finally tasks (e.g. AllowFailure.errors) must complete before the retry timer is allowed to fire.
                             if (!isErrorOrFinallyHandlingPending(taskRun, parentTaskWithRetry, executor, nextTaskRuns)) {
                                 behavior = retry.getBehavior();
-                                nextRetryDate = behavior.equals(AbstractRetry.Behavior.CREATE_NEW_EXECUTION) ? taskRun.nextRetryDate(retry, executor.getExecution()) : taskRun.nextRetryDate(retry);
+                                nextRetryDate = behavior.equals(AbstractRetry.Behavior.CREATE_NEW_EXECUTION) ? taskRun.nextRetryDate(retry, executor.getExecution())
+                                    : taskRun.nextRetryDate(retry);
                             }
                         }
                         // Case flow has a retry
@@ -1400,8 +1401,10 @@ public class ExecutorService {
         return taskRun.getState().getCurrent().isCreated()
             && !taskRun.getState().isResumingFromBreakpoint()
             && breakpoints.stream()
-                .anyMatch(breakpoint -> taskRun.getTaskId().equals(breakpoint.getId())
-                    && (breakpoint.getValue() == null || Objects.equals(taskRun.getValue(), breakpoint.getValue())));
+                .anyMatch(
+                    breakpoint -> taskRun.getTaskId().equals(breakpoint.getId())
+                        && (breakpoint.getValue() == null || Objects.equals(taskRun.getValue(), breakpoint.getValue()))
+                );
     }
 
     private ExecutorContext handleExecutableTasks(final ExecutorContext executor) {
@@ -1802,8 +1805,10 @@ public class ExecutorService {
      *      WARNING: ATM, only the first violation will update the execution.
      */
     public ExecutorContext handleExecutionChangedSLA(ExecutorContext executor) throws QueueException {
-        if (executor.getFlow() == null || ListUtils.isEmpty(executor.getFlow().getSla()) || executor.getExecution().getState().isTerminated() ||
-            executor.getExecution().getKind() ==  ExecutionKind.LOOP) {
+        if (
+            executor.getFlow() == null || ListUtils.isEmpty(executor.getFlow().getSla()) || executor.getExecution().getState().isTerminated() ||
+                executor.getExecution().getKind() == ExecutionKind.LOOP
+        ) {
             return executor;
         }
 
